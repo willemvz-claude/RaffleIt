@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="RaffleIt - Create and manage raffles">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RaffleIt</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body { background: #f0f4ff; margin: 0; }
+    #loading { display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; color: #1565C0; flex-direction: column; gap: 16px; }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="2"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+    RaffleIt
+  </div>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      document.getElementById('loading').remove();
+    });
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
