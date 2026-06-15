@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RaffleIt</title>
+<style>
+  :root {
+    --primary: #1565C0; --primary-dark: #0D47A1; --primary-light: #E3F2FD;
+    --primary-container: #BBDEFB; --on-primary: #fff;
+    --surface: #fff; --surface-variant: #F5F5F5;
+    --error: #B00020; --error-container: #FDECEA;
+    --green: #2E7D32; --green-light: #E8F5E9;
+    --radius: 12px; --shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #F0F4FF; color: #212121; min-height: 100vh; }
+
+  /* Layout */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Centered auth card */
+  .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .card { background: var(--surface); border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); padding: 32px; max-width: 420px; width: 100%; }
+  .card-header { text-align: center; margin-bottom: 28px; }
+  .card-header .icon { font-size: 48px; display: block; margin-bottom: 8px; }
+  .card-header h1 { color: var(--primary); font-size: 28px; }
+  .card-header p { color: #666; font-size: 14px; margin-top: 4px; }
+
+  /* Forms */
+  .form-group { margin-bottom: 16px; }
+  label { display: block; font-size: 13px; color: #555; margin-bottom: 4px; font-weight: 500; }
+  input, select, textarea {
+    width: 100%; padding: 12px 14px; border: 1.5px solid #DDD; border-radius: var(--radius);
+    font-size: 14px; font-family: inherit; background: #FAFAFA; transition: border-color 0.2s;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--primary); background: #fff; }
+  textarea { resize: vertical; min-height: 80px; }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 20px; border: none; border-radius: var(--radius); font-size: 15px;
+    font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit;
+    text-decoration: none;
+  }
+  .btn-primary { background: var(--primary); color: var(--on-primary); width: 100%; }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(21,101,192,0.3); }
+  .btn-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+  .btn-outline:hover { background: var(--primary-light); }
+  .btn-text { background: transparent; color: var(--primary); padding: 8px; width: 100%; font-size: 14px; }
+  .btn-text:hover { background: var(--primary-light); border-radius: var(--radius); }
+  .btn-sm { padding: 8px 14px; font-size: 13px; }
+  .btn-danger { background: var(--error); color: white; }
+  .btn-green { background: var(--green); color: white; }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* Alerts */
+  .alert { padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
+  .alert-error { background: var(--error-container); color: var(--error); border: 1px solid #FFCDD2; }
+  .alert-success { background: var(--green-light); color: var(--green); border: 1px solid #C8E6C9; }
+
+  /* App shell */
+  .app-bar {
+    background: var(--surface); border-bottom: 1px solid #E0E0E0; padding: 0 24px;
+    display: flex; align-items: center; height: 60px; gap: 12px; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .app-bar .logo { font-size: 20px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+  .app-bar .spacer { flex: 1; }
+  .app-bar .user-name { font-size: 14px; color: #555; }
+
+  .content { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+
+  /* Raffle cards */
+  .raffle-grid { display: grid; gap: 16px; }
+  .raffle-card {
+    background: var(--surface); border-radius: 16px; padding: 20px; box-shadow: var(--shadow);
+    cursor: pointer; transition: all 0.2s; border: 1px solid #E8E8E8;
+  }
+  .raffle-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+  .raffle-card .name { font-size: 18px; font-weight: 700; color: #212121; }
+  .raffle-card .org { font-size: 13px; color: #777; margin-top: 2px; }
+  .raffle-card .meta { display: flex; gap: 20px; margin-top: 12px; font-size: 13px; color: #555; flex-wrap: wrap; }
+  .raffle-card .meta span { display: flex; align-items: center; gap: 4px; }
+  .progress-bar { height: 6px; background: #E0E0E0; border-radius: 3px; margin-top: 12px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--primary); border-radius: 3px; transition: width 0.3s; }
+  .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .badge-primary { background: var(--primary-container); color: var(--primary-dark); }
+  .badge-green { background: var(--green-light); color: var(--green); }
+
+  /* FAB */
+  .fab {
+    position: fixed; bottom: 28px; right: 28px; width: 56px; height: 56px; border-radius: 50%;
+    background: var(--primary); color: white; border: none; font-size: 28px;
+    box-shadow: 0 4px 16px rgba(21,101,192,0.4); cursor: pointer; display: flex;
+    align-items: center; justify-content: center; transition: all 0.2s; z-index: 99;
+  }
+  .fab:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(21,101,192,0.5); }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 60px 20px; }
+  .empty .icon { font-size: 64px; opacity: 0.3; margin-bottom: 16px; }
+  .empty h3 { color: #555; margin-bottom: 8px; }
+  .empty p { color: #888; font-size: 14px; }
+
+  /* Detail page */
+  .detail-header {
+    background: var(--primary-container); border-radius: 16px; padding: 20px; margin-bottom: 16px;
+  }
+  .detail-header h2 { color: var(--primary-dark); font-size: 22px; }
+  .detail-header .org { color: #1976D2; font-size: 14px; margin-top: 4px; }
+  .detail-header .desc { color: #333; margin-top: 8px; font-size: 14px; }
+  .detail-header .prizes { color: var(--green); margin-top: 8px; font-size: 14px; }
+
+  .stats-bar { display: flex; gap: 16px; background: white; border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: var(--shadow); flex-wrap: wrap; }
+  .stat { flex: 1; min-width: 80px; text-align: center; }
+  .stat .val { font-size: 22px; font-weight: 700; }
+  .stat .lbl { font-size: 11px; color: #888; margin-top: 2px; }
+
+  /* Ticket list */
+  .ticket-filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .filter-btn { padding: 6px 16px; border-radius: 20px; border: 1.5px solid #DDD; background: white; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+  .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  .ticket-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .ticket-table th { text-align: left; padding: 10px 12px; border-bottom: 2px solid #E0E0E0; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+  .ticket-table td { padding: 10px 12px; border-bottom: 1px solid #F0F0F0; }
+  .ticket-table tr:hover td { background: #FAFAFA; }
+  .ticket-num { font-family: monospace; font-weight: 700; color: var(--primary); font-size: 15px; }
+
+  /* Claim page */
+  .claim-wrap { min-height: 100vh; background: #F0F4FF; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .claim-card { max-width: 480px; width: 100%; }
+  .ticket-banner { background: var(--primary-container); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .ticket-banner .raffle-title { font-size: 20px; font-weight: 700; color: var(--primary-dark); }
+  .ticket-badge { float: right; background: var(--primary); color: white; padding: 8px 16px; border-radius: 12px; font-size: 20px; font-weight: 700; font-family: monospace; }
+  .success-card { background: var(--green-light); border-radius: 16px; padding: 24px; text-align: center; }
+  .success-card .icon { font-size: 56px; }
+  .success-card h3 { color: var(--green); font-size: 20px; margin: 8px 0; }
+
+  /* Spinner */
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-center { display: flex; justify-content: center; padding: 60px; }
+  .spinner-lg { width: 40px; height: 40px; border: 3px solid #E0E0E0; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+  .back-btn { display: inline-flex; align-items: center; gap: 6px; color: var(--primary); font-size: 15px; font-weight: 600; cursor: pointer; background: none; border: none; padding: 8px 0; margin-bottom: 16px; }
+  .back-btn:hover { text-decoration: underline; }
+
+  .actions { display: flex; gap: 10px; justify-content: flex-end; margin-bottom: 16px; }
+
+  .section-card { background: white; border-radius: 16px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .section-title { font-size: 13px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+
+  @media (max-width: 600px) {
+    .row-2 { grid-template-columns: 1fr; }
+    .stats-bar { gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ LOGIN PAGE ═══════════════════ -->
+<div id="page-login" class="page active">
+  <div class="auth-wrap">
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">🎟️</span>
+        <h1>RaffleIt</h1>
+        <p>Sign in to manage your raffles</p>
+      </div>
+      <div id="login-error" class="alert alert-error" style="display:none"></div>
+      <form id="login-form">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="login-email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary" id="login-btn">Sign In</button>
+      </form>
+      <button class="btn btn-text" onclick="showPage('register')" style="margin-top:12px">Don't have an account? Register</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ REGISTER PAGE ═══════════════════ -->
+<div id="page-register" class="page">
+  <div class="auth-wrap">
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">🎟️</span>
+        <h1>Create Account</h1>
+        <p>Start running your own raffles</p>
+      </div>
+      <div id="reg-error" class="alert alert-error" style="display:none"></div>
+      <form id="reg-form">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="reg-name" placeholder="Jane Smith" required>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="reg-email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="reg-password" placeholder="Min 6 characters" minlength="6" required>
+        </div>
+        <button type="submit" class="btn btn-primary" id="reg-btn">Create Account</button>
+      </form>
+      <button class="btn btn-text" onclick="showPage('login')" style="margin-top:12px">Already have an account? Sign in</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ HOME PAGE ═══════════════════ -->
+<div id="page-home" class="page">
+  <div class="app-bar">
+    <div class="logo">🎟️ RaffleIt</div>
+    <div class="spacer"></div>
+    <span class="user-name" id="home-username"></span>
+    <button class="btn btn-outline btn-sm" onclick="logout()">Sign Out</button>
+  </div>
+  <div class="content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h2 style="font-size:22px;color:#212121">My Raffles</h2>
+      <button class="btn btn-primary btn-sm" onclick="showPage('create')">+ New Raffle</button>
+    </div>
+    <div id="home-loading" class="loading-center"><div class="spinner-lg"></div></div>
+    <div id="home-error" class="alert alert-error" style="display:none"></div>
+    <div id="raffles-list"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CREATE RAFFLE PAGE ═══════════════════ -->
+<div id="page-create" class="page">
+  <div class="app-bar">
+    <div class="logo">🎟️ RaffleIt</div>
+    <div class="spacer"></div>
+  </div>
+  <div class="content">
+    <button class="back-btn" onclick="showPage('home')">← Back to Raffles</button>
+    <h2 style="margin-bottom:20px;font-size:22px">Create New Raffle</h2>
+    <div id="create-error" class="alert alert-error" style="display:none"></div>
+    <form id="create-form">
+      <div class="section-card">
+        <div class="section-title">Basic Information</div>
+        <div class="form-group">
+          <label>Raffle Name *</label>
+          <input type="text" id="c-name" placeholder="e.g. Annual Charity Raffle 2024" required>
+        </div>
+        <div class="form-group">
+          <label>Organisation</label>
+          <input type="text" id="c-org" placeholder="e.g. Lions Club">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="c-desc" placeholder="Describe your raffle..."></textarea>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="section-title">Prizes</div>
+        <div class="form-group">
+          <label>Prizes</label>
+          <textarea id="c-prizes" placeholder="1st: Car&#10;2nd: Holiday&#10;3rd: Cash" rows="4"></textarea>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="section-title">Tickets</div>
+        <div class="form-group">
+          <label>Number of Tickets *</label>
+          <input type="number" id="c-tickets" placeholder="e.g. 500" min="1" max="10000" required>
+        </div>
+        <div class="row-2">
+          <div class="form-group">
+            <label>Currency</label>
+            <select id="c-currency">
+              <option>USD</option><option>EUR</option><option>GBP</option>
+              <option selected>ZAR</option><option>AUD</option><option>CAD</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Price per Ticket *</label>
+            <input type="number" id="c-price" placeholder="e.g. 10.00" min="0.01" step="0.01" required>
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" id="create-btn">🚀 Create Raffle &amp; Generate Tickets</button>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ RAFFLE DETAIL PAGE ═══════════════════ -->
+<div id="page-detail" class="page">
+  <div class="app-bar">
+    <div class="logo">🎟️ RaffleIt</div>
+    <div class="spacer"></div>
+  </div>
+  <div class="content">
+    <button class="back-btn" onclick="showPage('home')">← Back to Raffles</button>
+    <div id="detail-loading" class="loading-center"><div class="spinner-lg"></div></div>
+    <div id="detail-content" style="display:none">
+      <div id="detail-header"></div>
+      <div class="stats-bar" id="detail-stats"></div>
+      <div class="actions">
+        <button class="btn btn-primary btn-sm" onclick="downloadPdf()">📄 Download PDF Tickets</button>
+      </div>
+      <div class="section-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="section-title" style="margin-bottom:0">Tickets</div>
+          <div class="ticket-filters">
+            <button class="filter-btn active" onclick="filterTickets('all',this)">All</button>
+            <button class="filter-btn" onclick="filterTickets('claimed',this)">Claimed</button>
+            <button class="filter-btn" onclick="filterTickets('unclaimed',this)">Unclaimed</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="ticket-table">
+            <thead><tr>
+              <th>#</th><th>Status</th><th>Name</th><th>Email</th><th>Mobile</th><th>Purchased From</th>
+            </tr></thead>
+            <tbody id="ticket-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CLAIM TICKET PAGE ═══════════════════ -->
+<div id="page-claim" class="page">
+  <div class="claim-wrap">
+    <div class="claim-card">
+      <div style="text-align:center;margin-bottom:20px">
+        <span style="font-size:40px">🎟️</span>
+        <h1 style="color:var(--primary);margin-top:4px">RaffleIt</h1>
+      </div>
+      <div id="claim-loading" class="loading-center"><div class="spinner-lg"></div></div>
+      <div id="claim-not-found" style="display:none">
+        <div class="card" style="text-align:center">
+          <div style="font-size:48px">❌</div>
+          <h3 style="color:var(--error);margin:8px 0">Ticket Not Found</h3>
+          <p style="color:#666">This ticket may not exist or the link is invalid.</p>
+        </div>
+      </div>
+      <div id="claim-content" style="display:none">
+        <div class="ticket-banner" id="claim-banner"></div>
+        <div id="claim-form-wrap">
+          <div class="card">
+            <h3 style="color:var(--primary);margin-bottom:4px">Register Your Ticket</h3>
+            <p style="color:#666;font-size:13px;margin-bottom:16px">Fill in your details to claim this ticket</p>
+            <div id="claim-error" class="alert alert-error" style="display:none"></div>
+            <form id="claim-form">
+              <div class="row-2">
+                <div class="form-group"><label>First Name *</label><input type="text" id="cl-name" required></div>
+                <div class="form-group"><label>Surname *</label><input type="text" id="cl-surname" required></div>
+              </div>
+              <div class="form-group"><label>Mobile Number *</label><input type="tel" id="cl-mobile" required></div>
+              <div class="form-group"><label>Email Address *</label><input type="email" id="cl-email" required></div>
+              <div class="form-group"><label>Purchased From *</label><input type="text" id="cl-purchased" placeholder="Who sold you this ticket?" required></div>
+              <button type="submit" class="btn btn-primary" id="claim-btn">✅ Claim My Ticket</button>
+            </form>
+          </div>
+        </div>
+        <div id="claim-success" style="display:none">
+          <div class="success-card">
+            <div class="icon">✅</div>
+            <h3>Ticket Claimed!</h3>
+            <p style="color:#555;margin-top:4px">This ticket is registered to:</p>
+            <p id="success-name" style="font-size:20px;font-weight:700;margin-top:8px"></p>
+            <p id="success-email" style="color:#666;font-size:14px"></p>
+            <p id="success-from" style="color:#888;font-size:13px;margin-top:6px"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="fab" id="fab" onclick="showPage('create')" style="display:none">+</button>
+
+<script>
+const API = '';  // same origin
+let TOKEN = localStorage.getItem('token');
+let USER = JSON.parse(localStorage.getItem('user') || 'null');
+let currentRaffle = null;
+let allTickets = [];
+let currentClaimTicketId = null;
+
+// ── Navigation ──────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  document.getElementById('fab').style.display = name === 'home' ? 'flex' : 'none';
+  window.scrollTo(0, 0);
+  if (name === 'home') loadRaffles();
+  if (name === 'detail' && currentRaffle) loadDetail(currentRaffle);
+}
+
+// ── API calls ────────────────────────────────────────────────────────────────
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}) }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || `Error ${res.status}`);
+  return data;
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+document.getElementById('login-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  hideEl('login-error');
+  try {
+    const r = await api('POST', '/api/auth/login', {
+      email: v('login-email'), password: v('login-password')
+    });
+    setSession(r);
+    document.getElementById('home-username').textContent = USER.fullName;
+    showPage('home');
+  } catch (err) { showError('login-error', err.message); }
+  btn.disabled = false; btn.textContent = 'Sign In';
+};
+
+document.getElementById('reg-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('reg-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  hideEl('reg-error');
+  try {
+    const r = await api('POST', '/api/auth/register', {
+      email: v('reg-email'), password: v('reg-password'), fullName: v('reg-name')
+    });
+    setSession(r);
+    document.getElementById('home-username').textContent = USER.fullName;
+    showPage('home');
+  } catch (err) { showError('reg-error', err.message); }
+  btn.disabled = false; btn.textContent = 'Create Account';
+};
+
+function setSession(r) {
+  TOKEN = r.token; USER = r.user;
+  localStorage.setItem('token', TOKEN);
+  localStorage.setItem('user', JSON.stringify(USER));
+}
+
+function logout() {
+  TOKEN = null; USER = null;
+  localStorage.removeItem('token'); localStorage.removeItem('user');
+  showPage('login');
+}
+
+// ── Home ─────────────────────────────────────────────────────────────────────
+async function loadRaffles() {
+  showEl('home-loading'); hideEl('home-error');
+  document.getElementById('raffles-list').innerHTML = '';
+  try {
+    const raffles = await api('GET', '/api/raffles');
+    hideEl('home-loading');
+    if (!raffles.length) {
+      document.getElementById('raffles-list').innerHTML = `
+        <div class="empty"><div class="icon">📭</div><h3>No raffles yet</h3><p>Create your first raffle to get started</p></div>`;
+      return;
+    }
+    document.getElementById('raffles-list').innerHTML = raffles.map(r => `
+      <div class="raffle-card" onclick="openRaffle('${r.id}')">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+          <div>
+            <div class="name">${esc(r.name)}</div>
+            ${r.organisation ? `<div class="org">${esc(r.organisation)}</div>` : ''}
+          </div>
+          <span class="badge badge-primary">${esc(r.currency)} ${parseFloat(r.ticketPrice).toFixed(2)}</span>
+        </div>
+        <div class="meta">
+          <span>🎟️ ${r.numberOfTickets} tickets</span>
+          <span>✅ ${r.claimedTickets} claimed</span>
+          <span>📅 ${fmtDate(r.createdAt)}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${r.numberOfTickets ? (r.claimedTickets/r.numberOfTickets*100).toFixed(1) : 0}%"></div></div>
+      </div>`).join('');
+  } catch (err) { hideEl('home-loading'); showError('home-error', err.message); }
+}
+
+// ── Detail ────────────────────────────────────────────────────────────────────
+function openRaffle(id) {
+  currentRaffle = id;
+  showEl('detail-loading'); hideEl('detail-content');
+  showPage('detail');
+}
+
+async function loadDetail(id) {
+  try {
+    const r = await api('GET', `/api/raffles/${id}`);
+    allTickets = r.tickets || [];
+    hideEl('detail-loading'); showEl('detail-content');
+
+    document.getElementById('detail-header').innerHTML = `
+      <div class="detail-header">
+        <h2>${esc(r.name)}</h2>
+        ${r.organisation ? `<div class="org">🏢 ${esc(r.organisation)}</div>` : ''}
+        ${r.description ? `<div class="desc">${esc(r.description)}</div>` : ''}
+        ${r.prizes ? `<div class="prizes">🏆 ${esc(r.prizes)}</div>` : ''}
+      </div>`;
+
+    const pct = r.numberOfTickets ? (r.claimedTickets / r.numberOfTickets * 100).toFixed(0) : 0;
+    document.getElementById('detail-stats').innerHTML = `
+      <div class="stat"><div class="val" style="color:var(--primary)">${r.numberOfTickets}</div><div class="lbl">Total</div></div>
+      <div class="stat"><div class="val" style="color:var(--green)">${r.claimedTickets}</div><div class="lbl">Claimed</div></div>
+      <div class="stat"><div class="val" style="color:#E65100">${r.numberOfTickets - r.claimedTickets}</div><div class="lbl">Available</div></div>
+      <div class="stat"><div class="val" style="color:var(--primary)">${esc(r.currency)} ${parseFloat(r.ticketPrice).toFixed(2)}</div><div class="lbl">Price</div></div>
+      <div class="stat">
+        <div class="val" style="color:var(--primary)">${pct}%</div>
+        <div style="height:8px;background:#E0E0E0;border-radius:4px;margin-top:4px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:var(--primary);border-radius:4px"></div>
+        </div>
+      </div>`;
+
+    renderTickets(allTickets);
+  } catch (err) {
+    hideEl('detail-loading');
+    document.getElementById('detail-content').innerHTML = `<div class="alert alert-error">${esc(err.message)}</div>`;
+    showEl('detail-content');
+  }
+}
+
+function filterTickets(filter, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = filter === 'all' ? allTickets
+    : filter === 'claimed' ? allTickets.filter(t => t.isClaimed)
+    : allTickets.filter(t => !t.isClaimed);
+  renderTickets(filtered);
+}
+
+function renderTickets(tickets) {
+  document.getElementById('ticket-tbody').innerHTML = tickets.map(t => `
+    <tr>
+      <td><span class="ticket-num">#${String(t.ticketNumber).padStart(4,'0')}</span></td>
+      <td>${t.isClaimed
+        ? '<span class="badge badge-green">✅ Claimed</span>'
+        : '<span style="color:#888;font-size:13px">Unclaimed</span>'}</td>
+      <td>${t.isClaimed ? esc(`${t.claimedName} ${t.claimedSurname}`) : '—'}</td>
+      <td>${t.isClaimed ? esc(t.claimedEmail||'') : '—'}</td>
+      <td>${t.isClaimed ? esc(t.claimedMobile||'') : '—'}</td>
+      <td>${t.isClaimed ? esc(t.purchasedFrom||'') : '—'}</td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:20px;color:#888">No tickets match this filter</td></tr>';
+}
+
+async function downloadPdf() {
+  const url = `/api/raffles/${currentRaffle}/pdf`;
+  // Open in new tab — shows print-ready HTML, user presses Ctrl+P
+  window.open(url + '?token=' + encodeURIComponent(TOKEN), '_blank');
+}
+
+// ── Create ────────────────────────────────────────────────────────────────────
+document.getElementById('create-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('create-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Creating...';
+  hideEl('create-error');
+  try {
+    await api('POST', '/api/raffles', {
+      name: v('c-name'), description: v('c-desc') || null,
+      organisation: v('c-org') || null, prizes: v('c-prizes') || null,
+      numberOfTickets: parseInt(v('c-tickets')),
+      ticketPrice: parseFloat(v('c-price')),
+      currency: v('c-currency')
+    });
+    document.getElementById('create-form').reset();
+    showPage('home');
+  } catch (err) { showError('create-error', err.message); }
+  btn.disabled = false; btn.innerHTML = '🚀 Create Raffle &amp; Generate Tickets';
+};
+
+// ── Claim (public, routed by URL) ─────────────────────────────────────────────
+async function loadClaim(ticketId) {
+  currentClaimTicketId = ticketId;
+  showEl('claim-loading'); hideEl('claim-content'); hideEl('claim-not-found');
+  try {
+    const t = await fetch(`/api/tickets/${ticketId}`).then(async r => {
+      if (!r.ok) throw new Error('not found');
+      return r.json();
+    });
+    hideEl('claim-loading'); showEl('claim-content');
+
+    document.getElementById('claim-banner').innerHTML = `
+      <div class="ticket-badge">#${String(t.ticketNumber).padStart(4,'0')}</div>
+      <div class="raffle-title">${esc(t.raffle?.name || 'Raffle')}</div>
+      ${t.raffle?.organisation ? `<div style="color:#1976D2;font-size:13px;margin-top:2px">${esc(t.raffle.organisation)}</div>` : ''}
+      ${t.raffle?.prizes ? `<div style="color:var(--green);font-size:13px;margin-top:6px">🏆 ${esc(t.raffle.prizes)}</div>` : ''}
+      ${t.raffle ? `<div style="color:#555;font-size:13px;margin-top:4px">${esc(t.raffle.currency)} ${parseFloat(t.raffle.ticketPrice).toFixed(2)} per ticket</div>` : ''}`;
+
+    if (t.isClaimed) {
+      hideEl('claim-form-wrap');
+      document.getElementById('success-name').textContent = `${t.claimedName} ${t.claimedSurname}`;
+      document.getElementById('success-email').textContent = t.claimedEmail || '';
+      document.getElementById('success-from').textContent = t.purchasedFrom ? `Purchased from: ${t.purchasedFrom}` : '';
+      showEl('claim-success');
+    }
+  } catch (err) {
+    hideEl('claim-loading');
+    showEl('claim-not-found');
+  }
+}
+
+document.getElementById('claim-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('claim-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Claiming...';
+  hideEl('claim-error');
+  try {
+    const t = await fetch(`/api/tickets/${currentClaimTicketId}/claim`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: v('cl-name'), surname: v('cl-surname'),
+        mobile: v('cl-mobile'), email: v('cl-email'),
+        purchasedFrom: v('cl-purchased')
+      })
+    }).then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.message); return d; });
+
+    hideEl('claim-form-wrap');
+    document.getElementById('success-name').textContent = `${t.claimedName} ${t.claimedSurname}`;
+    document.getElementById('success-email').textContent = t.claimedEmail || '';
+    document.getElementById('success-from').textContent = t.purchasedFrom ? `Purchased from: ${t.purchasedFrom}` : '';
+    showEl('claim-success');
+  } catch (err) { showError('claim-error', err.message); }
+  btn.disabled = false; btn.textContent = '✅ Claim My Ticket';
+};
+
+// ── PDF download (needs auth header — use token in query for simplicity) ──────
+// Override fetch to add token for PDF endpoint
+const _origOpen = window.XMLHttpRequest.prototype.open;
+
+// ── Router ────────────────────────────────────────────────────────────────────
+function route() {
+  const path = window.location.pathname;
+  const claimMatch = path.match(/^\/claim\/([0-9a-f-]{36})$/i);
+  if (claimMatch) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-claim').classList.add('active');
+    loadClaim(claimMatch[1]);
+    return;
+  }
+  if (!TOKEN || !USER) { showPage('login'); return; }
+  document.getElementById('home-username').textContent = USER.fullName;
+  showPage('home');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function v(id) { return document.getElementById(id).value.trim(); }
+function showEl(id) { document.getElementById(id).style.display = ''; }
+function hideEl(id) { document.getElementById(id).style.display = 'none'; }
+function showError(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.style.display = ''; }
+function esc(s) { const d = document.createElement('div'); d.textContent = String(s||''); return d.innerHTML; }
+function fmtDate(s) { return new Date(s).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }); }
+
+route();
+</script>
+</body>
+</html>
