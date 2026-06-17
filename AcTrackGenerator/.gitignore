@@ -1,0 +1,7 @@
+bin/
+obj/
+*.user
+.vs/
+*.suo
+TestResults/
+phase0-spike-output/

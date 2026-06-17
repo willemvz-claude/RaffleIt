@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Pipeline.Orchestration\Pipeline.Orchestration.csproj" />
+    <ProjectReference Include="..\..\src\Geometry.TrackLayout\Geometry.TrackLayout.csproj" />
+    <ProjectReference Include="..\..\src\Geometry.MeshGen\Geometry.MeshGen.csproj" />
+    <ProjectReference Include="..\..\src\Ac.Domain\Ac.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Ac.Export.SceneBuilder\Ac.Export.SceneBuilder.csproj" />
+    <ProjectReference Include="..\..\src\Ac.Export.Kn5Pipeline\Ac.Export.Kn5Pipeline.csproj" />
+    <ProjectReference Include="..\..\src\Ac.Export.AiLine\Ac.Export.AiLine.csproj" />
+    <ProjectReference Include="..\..\src\Ac.Export.Packaging\Ac.Export.Packaging.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
