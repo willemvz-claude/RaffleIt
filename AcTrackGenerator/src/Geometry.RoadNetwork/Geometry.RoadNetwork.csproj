@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\Osm.Ingestion\Osm.Ingestion.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
