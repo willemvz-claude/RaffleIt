@@ -1,9 +1,10 @@
 FROM ghcr.io/cirruslabs/flutter:3.22.0 AS build
+ARG API_BASE_URL=http://localhost:5050
 WORKDIR /app
 COPY pubspec.yaml pubspec.lock* ./
 RUN flutter pub get
 COPY . .
-RUN flutter build web --release --dart-define=API_BASE_URL=http://localhost:5000
+RUN flutter build web --release --dart-define=API_BASE_URL=${API_BASE_URL}
 
 FROM nginx:alpine
 COPY --from=build /app/build/web /usr/share/nginx/html
