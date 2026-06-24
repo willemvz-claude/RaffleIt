@@ -1,0 +1,3 @@
+[submodule "AcTrackGenerator/third_party/blender-assetto-corsa-tools"]
+	path = AcTrackGenerator/third_party/blender-assetto-corsa-tools
+	url = https://github.com/moppius/blender-assetto-corsa-tools.git

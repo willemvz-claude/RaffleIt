@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <!-- Allows restoring the Windows Desktop reference assemblies and compiling this
+         project on non-Windows build agents. Running the produced exe still requires Windows. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>AcTrackGenerator.App.Wpf</RootNamespace>
+    <AssemblyName>AcTrackGenerator</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\App.MapUi\App.MapUi.csproj" />
+    <ProjectReference Include="..\Pipeline.Orchestration\Pipeline.Orchestration.csproj" />
+  </ItemGroup>
+
+</Project>

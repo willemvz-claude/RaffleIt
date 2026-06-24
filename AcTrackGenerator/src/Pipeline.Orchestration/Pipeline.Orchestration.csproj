@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Osm.Ingestion\Osm.Ingestion.csproj" />
+    <ProjectReference Include="..\Terrain.Elevation\Terrain.Elevation.csproj" />
+    <ProjectReference Include="..\Geometry.RoadNetwork\Geometry.RoadNetwork.csproj" />
+    <ProjectReference Include="..\Geometry.TrackLayout\Geometry.TrackLayout.csproj" />
+    <ProjectReference Include="..\Geometry.MeshGen\Geometry.MeshGen.csproj" />
+    <ProjectReference Include="..\Ac.Export.SceneBuilder\Ac.Export.SceneBuilder.csproj" />
+    <ProjectReference Include="..\Ac.Export.Kn5Pipeline\Ac.Export.Kn5Pipeline.csproj" />
+    <ProjectReference Include="..\Ac.Export.AiLine\Ac.Export.AiLine.csproj" />
+    <ProjectReference Include="..\Ac.Export.Packaging\Ac.Export.Packaging.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
